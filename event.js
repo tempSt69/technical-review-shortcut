@@ -25,7 +25,7 @@ retrieves every openings schedules between the 2 dates asked by client
 it'll add opening events if it's recurring and the next week date occurence is between the 2 dates
 it'll save the opening event between two dates as it is if not recurring
 */
-Event.prototype.getOpeningsBetweenDates = function (startDate, endDate) {
+getOpeningsBetweenDates = function (startDate, endDate) {
   const openings = [];
   eventList
     .filter(
@@ -65,7 +65,7 @@ Event.prototype.getOpeningsBetweenDates = function (startDate, endDate) {
 /*
 it simply retrieves busy events that are between the 2 dates.
 */
-Event.prototype.getBusyEventsBetweenDates = function (startDate, endDate) {
+getBusyEventsBetweenDates = function (startDate, endDate) {
   return eventList.filter((event) => {
     if (event.opening) {
       return false;
@@ -84,7 +84,7 @@ it split every events into small events of CONST_MINUTES_SLOT (actually 30 minut
 you can change CONST_MINUTES_SLOT to 60 if one day the business switch from 30 minutes appointments to 1h for example.
 It helps to show availabilities by CONST_MINUTES_SLOT each.
 */
-Event.prototype.splitInMinutes = (events) => {
+splitInMinutes = (events) => {
   let splittedTimers = [];
   events.forEach((ev) => {
     const nextOccurence = moment(ev.startDate);
@@ -98,7 +98,7 @@ Event.prototype.splitInMinutes = (events) => {
   return splittedTimers;
 };
 
-Event.prototype.getAvailabilitiesDates = function (openings, busySlots) {
+getAvailabilitiesDates = function (openings, busySlots) {
   return openings.filter((opening) => {
     return !busySlots.some(
       (busy) =>
@@ -108,14 +108,10 @@ Event.prototype.getAvailabilitiesDates = function (openings, busySlots) {
   });
 };
 
-Event.prototype.availabilities = function (fromDate, toDate) {
+availabilities = function (fromDate, toDate) {
   //retrive what we need (opening & busy slots)
-  const openings = this.splitInMinutes(
-    this.getOpeningsBetweenDates(fromDate, toDate)
-  );
-  const busySlots = this.splitInMinutes(
-    this.getBusyEventsBetweenDates(fromDate, toDate)
-  );
+  const openings = splitInMinutes(getOpeningsBetweenDates(fromDate, toDate));
+  const busySlots = splitInMinutes(getBusyEventsBetweenDates(fromDate, toDate));
 
   //if no availability at all
   if (openings.length === 0) {
@@ -123,14 +119,14 @@ Event.prototype.availabilities = function (fromDate, toDate) {
   }
 
   //filter every slots finally available and remap it well
-  const availableSlots = this.getAvailabilitiesDates(openings, busySlots);
+  const availableSlots = getAvailabilitiesDates(openings, busySlots);
 
   //recheck if no availability at all
   if (availableSlots.length === 0) {
     return "I'm not available any time!";
   }
 
-  return `I'm available from ${this.display(availableSlots)}.`;
+  return `I'm available from ${display(availableSlots)}.`;
 };
 
 /*
@@ -139,7 +135,7 @@ I wanted to do this in a more elgant way by using the new "group" javascript fun
 but it's not available yet
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/group
 */
-Event.prototype.display = function (availableSlots) {
+display = function (availableSlots) {
   let text = '';
   let lastDay = '';
   availableSlots.forEach((slot) => {
@@ -153,4 +149,14 @@ Event.prototype.display = function (availableSlots) {
   return text;
 };
 
-module.exports = { Event, eventList, resetEventList };
+module.exports = {
+  Event,
+  eventList,
+  resetEventList,
+  getAvailabilitiesDates,
+  availabilities,
+  display,
+  getBusyEventsBetweenDates,
+  getOpeningsBetweenDates,
+  splitInMinutes,
+};
