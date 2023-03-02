@@ -24,19 +24,35 @@ resetEventList = () => {
 retrieves every openings schedules between the 2 dates asked by client
 it'll add opening events if it's recurring and the next week date occurence is between the 2 dates
 it'll save the opening event between two dates as it is if not recurring
+it'll also recreate eventEnd and eventStart if needed for better performance next and less loops
 */
 getOpeningsBetweenDates = function (startDate, endDate) {
   const openings = [];
   eventList
     .filter(
       (event) =>
-        (event.opening &&
-          (event.recurring ||
-            startDate.isBetween(event.startDate, event.endDate) ||
-            endDate.isBetween(event.startDate, event.endDate))) ||
-        (startDate < event.startDate && endDate > event.endDate)
+        event.opening &&
+        (event.recurring ||
+          startDate.isBetween(event.startDate, event.endDate) ||
+          endDate.isBetween(event.startDate, event.endDate) ||
+          (startDate < event.startDate && endDate > event.endDate))
     )
     .forEach((event) => {
+      if (
+        startDate.isBetween(event.startDate, event.endDate) ||
+        endDate.isBetween(event.startDate, event.endDate) ||
+        (startDate < event.startDate && endDate > event.endDate)
+      ) {
+        openings.push({
+          ...event,
+          startDate:
+            event.startDate < startDate
+              ? moment(startDate)
+              : moment(event.startDate),
+          endDate:
+            event.endDate > endDate ? moment(endDate) : moment(event.endDate),
+        });
+      }
       if (event.recurring) {
         const nextStartOccurrence = moment(event.startDate).add(1, 'week');
         const nextEndOccurrence = moment(event.endDate).add(1, 'week');
@@ -44,7 +60,10 @@ getOpeningsBetweenDates = function (startDate, endDate) {
         while (nextStartOccurrence.isBefore(endDate)) {
           openings.push({
             ...event,
-            startDate: moment(nextStartOccurrence),
+            startDate:
+              nextStartOccurrence < startDate
+                ? moment(startDate)
+                : moment(nextStartOccurrence),
             endDate:
               nextEndOccurrence > endDate
                 ? moment(endDate)
@@ -53,11 +72,8 @@ getOpeningsBetweenDates = function (startDate, endDate) {
           nextStartOccurrence.add(1, 'week');
           nextEndOccurrence.add(1, 'week');
         }
-      } else {
-        openings.push(event);
       }
     });
-
   //sort it for cleaner displaying next
   return openings.sort((a, b) => a.startDate - b.startDate);
 };
@@ -71,9 +87,9 @@ getBusyEventsBetweenDates = function (startDate, endDate) {
       return false;
     }
     return (
-      event.startDate.isBetween(startDate, endDate) ||
-      event.endDate.isBetween(startDate, endDate) ||
-      (startDate < event.startDate && endDate > event.endDate)
+      startDate.isBetween(event.startDate, event.endDate) ||
+      endDate.isBetween(event.startDate, event.endDate) ||
+      (startDate <= event.startDate && endDate >= event.endDate)
     );
   });
 };

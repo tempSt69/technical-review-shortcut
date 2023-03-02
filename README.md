@@ -35,6 +35,10 @@ Start the main.js
 Start unit tests
 `jest main.test.js --config=jest.config.js`
 
+## 100% coverage
+
+![Test covering](coverage.png)
+
 ## Have fun
 
 I'd be glad to discuss about other or better possibilities to do it.

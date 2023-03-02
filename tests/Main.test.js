@@ -30,7 +30,6 @@ describe('Testing Events Entity Logic', () => {
 });
 
 describe('Testing Events Entity Context', () => {
-  let mainEvent;
   let fromDate;
   let toDate;
   //prepare the context
@@ -42,6 +41,9 @@ describe('Testing Events Entity Context', () => {
     var startDate = moment('2006-07-02 08:00');
     var endDate = moment('2006-07-02 18:00');
     new Event.Event(true, true, startDate, endDate);
+    var startDate = moment('2006-07-01 16:00');
+    var endDate = moment('2006-07-01 18:00');
+    new Event.Event(true, false, startDate, endDate);
 
     //add busy events
     var startDate = moment('2006-07-08 11:30');
@@ -59,9 +61,13 @@ describe('Testing Events Entity Context', () => {
   });
 
   //test openings events
-  test('GetOpeningsBetweenDates -> should return 4 availabilities', () => {
+  test('GetOpeningsBetweenDates -> should return 2 availabilities', () => {
     const result = getOpeningsBetweenDates(fromDate, toDate);
-    expect(result.length).toBe(4);
+    expect(result.length).toBe(2);
+  });
+  test('GetOpeningsBetweenDates -> should return 2 availabilities', () => {
+    const result = getOpeningsBetweenDates(fromDate, toDate);
+    expect(result.length).toBe(2);
   });
 
   //test busy events
@@ -71,9 +77,9 @@ describe('Testing Events Entity Context', () => {
   });
 
   //test the 30 minutes splitting availabilities
-  test('Split in 30 minutes opening events -> should return 40 opening events', () => {
+  test('Split in 30 minutes opening events -> should return 27 opening events', () => {
     const result = splitInMinutes(getOpeningsBetweenDates(fromDate, toDate));
-    expect(result.length).toBe(40);
+    expect(result.length).toBe(27);
   });
 
   //test
@@ -89,12 +95,56 @@ describe('Testing Events Entity Context', () => {
     expect(result.length).toBe(14);
   });
 
-  test('GetAvailabilitiesDates for client -> should return specific text', () => {
+  test("Display availabilties for client -> should return I'm not available any time!", () => {
+    fromDate = moment('2006-07-01 08:00');
+    toDate = moment('2006-07-01 10:00');
+    const result = availabilities(fromDate, toDate);
+    expect(result).toBe("I'm not available any time!");
+  });
+
+  test("Display availabilties for client -> should return I'm not available any time!", () => {
+    fromDate = moment('2006-07-08 11:30');
+    toDate = moment('2006-07-08 12:30');
+    const result = availabilities(fromDate, toDate);
+    expect(result).toBe("I'm not available any time!");
+  });
+
+  test('Display availabilties for client -> should return specific text', () => {
     fromDate = moment('2006-07-05 10:00');
     toDate = moment('2006-07-15 16:00');
     const result = availabilities(fromDate, toDate);
     expect(result).toBe(
       "I'm available from \nJuly 8th at 10:30 , 11:00 , 12:30 , 13:00 , 13:30 \nJuly 9th at 08:00 , 08:30 , 09:00 , 09:30 , 10:00 , 16:00 , 16:30 , 17:00 , 17:30 \nJuly 15th at 13:00 , 13:30 ."
     );
+  });
+
+  test('Display availabilties for client asking for short range dates -> should return specific text', () => {
+    fromDate = moment('2006-07-01 11:00');
+    toDate = moment('2006-07-01 13:00');
+    const result = availabilities(fromDate, toDate);
+    expect(result).toBe(
+      "I'm available from \nJuly 1st at 11:00 , 11:30 , 12:00 , 12:30 ."
+    );
+  });
+
+  test('Display availabilties for client asking for short range dates start between opening date -> should return specific text', () => {
+    fromDate = moment('2006-07-01 13:00');
+    toDate = moment('2006-07-01 14:00');
+    const result = availabilities(fromDate, toDate);
+    expect(result).toBe("I'm available from \nJuly 1st at 13:00 , 13:30 .");
+  });
+
+  test('Display availabilties for client asking for short range dates end between opening date -> should return specific text', () => {
+    fromDate = moment('2006-07-01 09:00');
+    toDate = moment('2006-07-01 11:00');
+    const result = availabilities(fromDate, toDate);
+    expect(result).toBe("I'm available from \nJuly 1st at 10:30 .");
+  });
+
+  test('Display availabilties for client asking for short range dates on opening non recurring -> should return specific text', () => {
+    fromDate = moment('2006-07-01 16:00');
+    toDate = moment('2006-07-01 17:00');
+    const result = availabilities(fromDate, toDate);
+    expect(result).toBe("I'm available from \nJuly 1st at 16:00 , 16:30 .");
   });
 });
